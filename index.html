@@ -12,6 +12,7 @@ TODO:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/55c134a797.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" rel="stylesheet">
@@ -41,6 +42,9 @@ TODO:
             border-radius: 50%;
             padding: 5px;
         }
+        .materia-singola span {
+            text-align: center
+        }
         input {
             background: none;border:none;border-bottom: 2px solid lightgray;
             width: 50px;
@@ -66,9 +70,9 @@ TODO:
     <main style="padding: 10px;">
         <div style="max-width: 400px;margin: 0 auto;">
             <div id="general-panel" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></div>
-            <div id="list-panel">
+            <div id="list-panel" style="position:relative;background:var(--bianco);border-radius: 20px;margin: 30px 0;min-height: 250px;">
+                <span style="color: lightgray;position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);">da fa</span>
                 <table>
-    
                 </table>
             </div>
         </div>
@@ -91,6 +95,7 @@ TODO:
             <button style="padding: 10px 15px;background: var(--primario);color: var(--bianco);border: none;border-radius: 10px;cursor: pointer;" onclick="aggiungiVoto()">Aggiungi Voto</button>
         </div>
     </div>
+    <footer style="background: var(--primario);text-align: center;color: var(--bianco);padding: 10px;"><a href="https://github.com/azotounderscore/voti-tracciatore" style="color: var(--bianco);text-decoration: none;">Github <i class="fa-brands fa-github"></i></a></footer>
 
 <script>
 const materie = [
@@ -133,6 +138,26 @@ const materie = [
         nome: "Fisica",
         val: [7.5, 4.5, 8.5],
         peso: [100, 100, 50]
+    },
+    {
+        nome: "Educazione Civiva",
+        val: [6, 4, 7.5],
+        peso: [100, 100, 100]
+    },
+    {
+        nome: "Storia",
+        val: [6, 4, 7.25, 6.5],
+        peso: [50, 50, 100, 100]
+    },
+    {
+        nome: "Scienze Motorie",
+        val: [7.5, 8.5],
+        peso: [100, 100]
+    },
+    {
+        nome: "Religione",
+        val: [],
+        peso: []
     }
 ]
 const generalPanel = document.getElementById('general-panel')
