@@ -60,14 +60,17 @@ TODO:
         }
     </style>
 </head>
-<body style="background: var(--primario);">
+<body style="background: var(--bg);">
+    <header style="background: var(--primario);border-radius: 0 0 15px 15px;font-size: 24px;color: var(--bianco);text-align: center;padding: 20px;">Classeviva</header>
     <button style="width: 40px;height: 40px;" onclick="openModal()">+</button>
-    <main style="background: var(--bg);margin-top: 30px;padding: 10px;border-radius: 15px 15px 0 0;">
-        <div id="general-panel" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></div>
-        <div id="list-panel">
-            <table>
-
-            </table>
+    <main style="padding: 10px;">
+        <div style="max-width: 400px;margin: 0 auto;">
+            <div id="general-panel" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></div>
+            <div id="list-panel">
+                <table>
+    
+                </table>
+            </div>
         </div>
     </main>
     <div id="modal" style="display: none;position: fixed;top:0;z-index: 10;width: 100%;;height: 100vh;background: rgba(0, 0, 0, 0.5);">
@@ -105,6 +108,31 @@ const materie = [
         nome: "Scienze",
         val: [5.75, 4.5, 5.5],
         peso: [100, 100, 100]
+    },
+    {
+        nome: "Italiano",
+        val: [5.5, 4, 5.5, 4.75],
+        peso: [100, 50, 100, 100]
+    },
+    {
+        nome: "Filosofia",
+        val: [4, 6, 5.5, 9],
+        peso: [50, 100, 100, 50]
+    },
+    {
+        nome: "Latino",
+        val: [7.5, 4.75, 5.75, 7.5, 5.25],
+        peso: [50, 100, 100, 50, 100]
+    },
+    {
+        nome: "Arte",
+        val: [4, 5.75],
+        peso: [50, 100]
+    },
+    {
+        nome: "Fisica",
+        val: [7.5, 4.5, 8.5],
+        peso: [100, 100, 50]
     }
 ]
 const generalPanel = document.getElementById('general-panel')
