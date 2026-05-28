@@ -1,0 +1,260 @@
+<!--
+
+TODO:
+
+    -   gli input nel modal potrebbero essere fatti come uno slider orizzontale del voto,
+        ma tipo che i voti sono in fila e l'utente trascinando piazza il voto da inserire al centro
+    -   aggiungere lista voti per ordine cronologico (servirà aggiungere la data)
+    -   DAFIXARE: quando si aggiunge una nuova valutazione dopo averne gia aggiunta una compaiono due volte i pulsanti per le materie
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/55c134a797.js" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" rel="stylesheet">
+    <title>ClassevivaViewer</title>
+    <style>
+        *{box-sizing:border-box;margin: 0;padding: 0;font-family: "Sora", sans-serif;}
+        :root {
+            --bg: #f0f0f0;
+            --primario: #d00000;
+            --bianco: #fafafa;
+            --rosso: #d10100;
+            --arancio: #d08800; 
+            --verde: #71ad00;
+        }
+        .materia-singola{
+            background: var(--bianco);
+            border-radius: 20px;
+            padding: 10px;
+            font-size: 14px;
+            display: flex;flex-flow: column;justify-content: center;align-items: center;gap:7px
+        }
+        .materia-singola > div {
+            background: var(--rosso);
+            color: white;
+            aspect-ratio: 1/1;
+            display: flex;align-items: center;
+            border-radius: 50%;
+            padding: 5px;
+        }
+        .materia-singola span {
+            text-align: center
+        }
+        input {
+            background: none;border:none;border-bottom: 2px solid lightgray;
+            width: 50px;
+        }
+        #modal > div > div {
+            display: flex;align-items: center;gap: 20px;
+        }
+        ul li {
+            padding: 5px 15px;
+            border: 2px solid rgba(211, 211, 211, 0.541);
+            border-radius: 10px;
+            cursor: pointer;
+            list-style: none;
+        }
+        .materiaSelezionata {
+            border: 2px solid red;
+        }
+    </style>
+</head>
+<body style="background: var(--bg);">
+    <header style="background: var(--primario);border-radius: 0 0 15px 15px;font-size: 24px;color: var(--bianco);text-align: center;padding: 20px;">Classeviva</header>
+    <main style="padding: 0 10px;">
+        <div style="max-width: 400px;margin: 0 auto;">
+            <div style="display: flex;justify-content: center;">
+                <button style="background: var(--primario);font-size: 20px; color: var(--bianco);border: 1px solid rgba(163, 0, 0, 0.774);padding: 8px 15px;border-radius: 30px;margin: 30px 0;cursor: pointer;" onclick="openModal()">Aggiungi Valutazione</button>
+            </div>
+            <div id="general-panel" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></div>
+            <div id="list-panel" style="position:relative;background:var(--bianco);border-radius: 20px;margin: 30px 0;min-height: 250px;">
+                <span style="color: lightgray;position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);">da fa</span>
+                <table>
+                </table>
+            </div>
+        </div>
+    </main>
+    <div id="modal" style="display: none;position: fixed;top:0;z-index: 10;width: 100%;;height: 100vh;background: rgba(0, 0, 0, 0.5);">
+        <div style="background: var(--bianco);display: flex;flex-flow: column;align-items: center;gap:20px;bottom: 0;position:absolute;width: 100%;padding: 25px 0;border-radius: 15px 15px 0 0;">
+            <button onclick="openModal()" style="width: 30px;height: 30px;border-radius: 50% 0 50% 0;background: red;border: none;position: absolute;top: 0;left: 0;cursor: pointer;">X</button>
+            <div>
+                <span>Voto:</span>
+                <input id="inputVal" type="number">
+            </div>
+            <div>
+                <span>Peso:</span>
+                <input id="inputPeso" type="number">
+            </div>
+            <div style="display: flex;flex-flow: column;">
+                <span>Materia:</span>
+                <ul id="modal-materie-list" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></ul>
+            </div>
+            <button style="padding: 10px 15px;background: var(--primario);color: var(--bianco);border: none;border-radius: 10px;cursor: pointer;" onclick="aggiungiVoto()">Aggiungi Valutazione</button>
+        </div>
+    </div>
+    <footer style="background: var(--primario);text-align: center;color: var(--bianco);padding: 10px;"><a href="https://github.com/azotounderscore/voti-tracciatore" style="color: var(--bianco);text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px;"></i> Github <i class="fa-brands fa-github"></i></a></footer>
+
+<script>
+const materie = [
+    {
+        nome: "Inglese",
+        val: [9, 7.75, 8.5],
+        peso: [100, 100, 100]
+    },
+    {
+        nome: "Matematica",
+        val: [7.25, 10, 4.5],
+        peso: [100, 25, 100]
+    },
+    {
+        nome: "Scienze",
+        val: [5.75, 4.5, 5.5],
+        peso: [100, 100, 100]
+    },
+    {
+        nome: "Italiano",
+        val: [5.5, 4, 5.5, 4.75],
+        peso: [100, 50, 100, 100]
+    },
+    {
+        nome: "Filosofia",
+        val: [4, 6, 5.5, 9],
+        peso: [50, 100, 100, 50]
+    },
+    {
+        nome: "Latino",
+        val: [7.5, 4.75, 5.75, 7.5, 5.25],
+        peso: [50, 100, 100, 50, 100]
+    },
+    {
+        nome: "Arte",
+        val: [4, 5.75],
+        peso: [50, 100]
+    },
+    {
+        nome: "Fisica",
+        val: [7.5, 4.5, 8.5],
+        peso: [100, 100, 50]
+    },
+    {
+        nome: "Educazione Civiva",
+        val: [6, 4, 7.5],
+        peso: [100, 100, 100]
+    },
+    {
+        nome: "Storia",
+        val: [6, 4, 7.25, 6.5],
+        peso: [50, 50, 100, 100]
+    },
+    {
+        nome: "Scienze Motorie",
+        val: [7.5, 8.5],
+        peso: [100, 100]
+    },
+    {
+        nome: "Religione",
+        val: [],
+        peso: []
+    }
+]
+const generalPanel = document.getElementById('general-panel')
+const listPanel = document.getElementById('list-panel')
+
+var materiaSelezionata
+
+function init() {
+    document.getElementById('modal-materie-list').innerHTML = ''
+    generalPanel.innerHTML =
+    `<div id="media-generale" style="padding: 25px 0;grid-column: span 2 / span 2;background: var(--verde);border-radius: 20px;display: flex;flex-flow: column;justify-content: center;align-items: center;gap:17px;color: var(--bianco);">
+        <span style="font-size: 14px;">La tua media complessiva:</span>
+        <div id="general-display" style="border: 5px solid white;aspect-ratio: 1/1;display: flex;align-items: center;border-radius: 50%;padding: 15px;font-size: 32px;"></div>
+    </div>`
+    const generalDisplay = document.getElementById('general-display')
+        materie.forEach(materia => {
+            var col
+        var mediaMat = mediaPonderata(materia)
+        if (mediaMat >= 6) {col = "var(--verde)"} else if (mediaMat >= 5) {col = "var(--arancio)"} else {col = "var(--arancio)"}
+        const container = document.createElement('div')
+        container.classList.add('materia-singola')
+        container.innerHTML = `
+        <span>${materia.nome}</span>
+        <div style="background:${col}">${mediaMat}</div>`;
+        generalPanel.appendChild(container)
+    
+        const materiaPulsante = document.createElement('li')
+        materiaPulsante.innerHTML = materia.nome
+        document.getElementById('modal-materie-list').appendChild(materiaPulsante)
+    });
+    generalDisplay.textContent = calcoloMediaTot()
+    console.log(generalDisplay);
+
+    // lista 
+
+    
+}
+function calcoloMediaTot() {
+    console.log("calcoloMediaTot chiamata");
+    var mediaTotale = 0
+    var pesoTotale = 0
+    for (let i = 0;i<materie.length;i++) {
+        for(let j = 0;j<materie[i].val.length;j++){
+            mediaTotale += materie[i].val[j]*materie[i].peso[j]
+            pesoTotale += materie[i].peso[j]
+        }
+    }
+    mediaTotale /= pesoTotale
+    console.log(mediaTotale);
+    return mediaTotale.toFixed(2)
+}
+init()
+function mediaPonderata(materia) {
+    var media = 0
+    var pesoTot = 0
+    for (let i=0;i<materia.val.length;i++) {
+        media += (materia.val[i]*materia.peso[i])
+        pesoTot += materia.peso[i]
+    }
+    media /= pesoTot
+    return media.toFixed(2)
+}
+const liElements = document.querySelectorAll('li')
+liElements.forEach(el => {
+    el.addEventListener('click', function() {
+        liElements.forEach(liEl => {liEl.classList.remove('materiaSelezionata')})
+        el.classList.toggle("materiaSelezionata")
+        console.log(el.textContent)
+    })
+});
+function selezionaMateria(materia) {
+    materiaSelezionata = materia.nome
+    console.log("seleziona", materiaSelezionata)
+}
+
+const modal = document.getElementById('modal')
+function openModal() {
+    if (modal.style.display == "none") {modal.style.display = "block"} else {modal.style.display = "none"}
+}
+var nuovoVal
+var nuovoPeso
+function aggiungiVoto(){
+    nuovoPeso = document.getElementById('inputPeso').value
+    nuovoVal = document.getElementById('inputVal').value
+    const nuovoMateria = document.querySelector('.materiaSelezionata').innerHTML;
+    console.log("NUOVO VOTO:", nuovoVal, nuovoPeso, nuovoMateria)
+    const materiaTrovata = materie.find(m => m.nome === nuovoMateria)
+    if (materiaTrovata) {
+        materiaTrovata.val.push(parseFloat(nuovoVal))
+        materiaTrovata.peso.push(parseFloat(nuovoPeso))
+    }
+    openModal()
+    init()
+}
+</script>
+</body>
+</html>

@@ -1,254 +1,1014 @@
-<!--
-
-TODO:
-
-    -   gli input nel modal potrebbero essere fatti come uno slider orizzontale del voto,
-        ma tipo che i voti sono in fila e l'utente trascinando piazza il voto da inserire al centro
-    -   aggiungere lista voti per ordine cronologico (servirà aggiungere la data)
-
--->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://kit.fontawesome.com/55c134a797.js" crossorigin="anonymous"></script>
+    <title>Voti Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" rel="stylesheet">
-    <title>ClassevivaViewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        *{box-sizing:border-box;margin: 0;padding: 0;font-family: "Sora", sans-serif;}
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --bg: #f0f0f0;
-            --primario: #d00000;
-            --bianco: #fafafa;
-            --rosso: #d10100;
-            --arancio: #d08800; 
-            --verde: #71ad00;
+            --bg: #f5f2ee;
+            --card: #ffffff;
+            --rosso: #c0392b;
+            --rosso-light: #e8d5d3;
+            --arancio: #d35400;
+            --verde: #27ae60;
+            --ink: #1a1a1a;
+            --ink-muted: #888;
+            --border: #e8e4df;
+            --shadow: 0 2px 12px rgba(0,0,0,0.07);
+            --radius: 16px;
         }
-        .materia-singola{
-            background: var(--bianco);
+
+        body {
+            background: var(--bg);
+            font-family: 'DM Sans', sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            background: var(--rosso);
+            padding: 20px 20px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 0; right: 0;
+            height: 40px;
+            background: var(--bg);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        }
+        .header-inner {
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 26px;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.85);
+            font-size: 12px;
+        }
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
             border-radius: 20px;
-            padding: 10px;
-            font-size: 14px;
-            display: flex;flex-flow: column;justify-content: center;align-items: center;gap:7px
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        .materia-singola > div {
+        .user-badge:hover { background: rgba(255,255,255,0.3); }
+
+        /* MAIN */
+        main {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 10px 16px 100px;
+        }
+
+        /* MEDIA GENERALE */
+        .media-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 20px 0 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid var(--border);
+        }
+        .media-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 26px;
+            color: white;
+            flex-shrink: 0;
+            border: 3px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .media-info { flex: 1; }
+        .media-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--ink-muted);
+            margin-bottom: 4px;
+        }
+        .media-value {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px;
+        }
+        .media-sub { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+
+        /* GRID MATERIE */
+        .materie-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .materia-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .materia-card:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .materia-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 15px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .materia-nome {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+        .materia-count { font-size: 10px; color: var(--ink-muted); margin-top: 2px; }
+
+        /* SECTION LISTA */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px;
+        }
+        .sort-toggle {
+            display: flex;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .sort-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            padding: 4px 10px;
+            border: none;
+            background: none;
+            border-radius: 16px;
+            cursor: pointer;
+            color: var(--ink-muted);
+            transition: all 0.2s;
+        }
+        .sort-btn.active {
             background: var(--rosso);
             color: white;
-            aspect-ratio: 1/1;
-            display: flex;align-items: center;
-            border-radius: 50%;
-            padding: 5px;
         }
-        .materia-singola span {
-            text-align: center
+
+        /* LISTA VOTI */
+        .voti-list { display: flex; flex-direction: column; gap: 8px; }
+        .voto-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.25s ease;
         }
-        input {
-            background: none;border:none;border-bottom: 2px solid lightgray;
-            width: 50px;
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        #modal > div > div {
-            display: flex;align-items: center;gap: 20px;
-        }
-        ul li {
-            padding: 5px 15px;
-            border: 2px solid rgba(211, 211, 211, 0.541);
+        .voto-badge {
+            width: 44px;
+            height: 44px;
             border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 17px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .voto-info { flex: 1; min-width: 0; }
+        .voto-materia { font-size: 13px; font-weight: 500; }
+        .voto-meta { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+        .voto-peso {
+            font-size: 11px;
+            color: var(--ink-muted);
+            background: var(--bg);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .group-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--ink-muted);
+            padding: 8px 4px 4px;
+            font-weight: 600;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--ink-muted);
+            font-size: 13px;
+        }
+        .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
+
+        /* FAB - PULSANTE AGGIUNGI */
+        .fab {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--rosso);
+            color: white;
+            border: none;
+            border-radius: 28px;
+            padding: 14px 28px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
-            list-style: none;
+            box-shadow: 0 6px 24px rgba(192,57,43,0.45);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.15s, box-shadow 0.15s;
+            z-index: 5;
+            white-space: nowrap;
         }
-        .materiaSelezionata {
-            border: 2px solid red;
+        .fab:hover { transform: translateX(-50%) translateY(-2px); box-shadow: 0 10px 30px rgba(192,57,43,0.5); }
+        .fab:active { transform: translateX(-50%) translateY(0); }
+        .fab svg { width: 18px; height: 18px; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 20;
+            backdrop-filter: blur(4px);
         }
+        .modal-overlay.open { display: flex; align-items: flex-end; }
+        .modal-sheet {
+            background: var(--card);
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            padding: 0 0 env(safe-area-inset-bottom);
+            max-height: 92vh;
+            overflow-y: auto;
+            animation: sheetUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes sheetUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-handle {
+            width: 36px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 14px auto 20px;
+        }
+        .modal-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 0 20px;
+        }
+        .modal-body { padding: 0 20px 24px; }
+
+        /* SLIDER VOTO */
+        .voto-slider-section { margin-bottom: 24px; }
+        .slider-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--ink-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .voto-display {
+            text-align: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 48px;
+            margin-bottom: 12px;
+            transition: color 0.3s;
+        }
+        .slider-track {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 4px 0 8px;
+            scrollbar-width: none;
+        }
+        .slider-track::-webkit-scrollbar { display: none; }
+        .slider-voto {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            color: var(--ink-muted);
+        }
+        .slider-voto:hover { border-color: var(--rosso); color: var(--rosso); }
+        .slider-voto.sel {
+            background: var(--rosso);
+            border-color: var(--rosso);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(192,57,43,0.35);
+        }
+
+        /* PESO */
+        .peso-section { margin-bottom: 24px; }
+        .peso-options { display: flex; gap: 8px; }
+        .peso-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg);
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .peso-btn.sel {
+            border-color: var(--rosso);
+            background: var(--rosso-light);
+            color: var(--rosso);
+        }
+        .peso-custom-wrap { margin-top: 8px; display: none; }
+        .peso-custom-wrap.show { display: block; }
+        .peso-custom-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            background: var(--bg);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .peso-custom-input:focus { border-color: var(--rosso); }
+
+        /* MATERIE MODAL */
+        .materie-section { margin-bottom: 28px; }
+        .materie-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .materia-chip {
+            padding: 8px 14px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: var(--bg);
+            color: var(--ink);
+        }
+        .materia-chip:hover { border-color: var(--rosso); }
+        .materia-chip.sel {
+            background: var(--rosso);
+            border-color: var(--rosso);
+            color: white;
+        }
+
+        /* CONFIRM BTN */
+        .confirm-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--rosso);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(192,57,43,0.35);
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .confirm-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: var(--ink);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            white-space: nowrap;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--ink-muted);
+            font-size: 13px;
+        }
+
+        /* USER SETUP */
+        .setup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+        .setup-overlay.show { display: flex; }
+        .setup-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 32px 28px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .setup-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--rosso-light);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+        }
+        .setup-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .setup-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 24px; line-height: 1.5; }
+        .setup-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            text-align: center;
+            letter-spacing: 3px;
+            background: var(--bg);
+            outline: none;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .setup-input:focus { border-color: var(--rosso); }
+        .setup-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--rosso);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: opacity 0.2s;
+        }
+        .setup-btn:hover { opacity: 0.9; }
+        .setup-btn-sec {
+            width: 100%;
+            padding: 14px;
+            background: none;
+            color: var(--rosso);
+            border: 2px solid var(--rosso-light);
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .setup-btn-sec:hover { background: var(--rosso-light); }
+
+        footer {
+            background: var(--rosso);
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            padding: 12px;
+            font-size: 12px;
+            margin-top: 40px;
+        }
+        footer a { color: white; text-decoration: none; }
     </style>
 </head>
-<body style="background: var(--bg);">
-    <header style="background: var(--primario);border-radius: 0 0 15px 15px;font-size: 24px;color: var(--bianco);text-align: center;padding: 20px;">Classeviva</header>
-    <button style="width: 40px;height: 40px;" onclick="openModal()">+</button>
-    <main style="padding: 10px;">
-        <div style="max-width: 400px;margin: 0 auto;">
-            <div id="general-panel" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></div>
-            <div id="list-panel" style="position:relative;background:var(--bianco);border-radius: 20px;margin: 30px 0;min-height: 250px;">
-                <span style="color: lightgray;position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);">da fa</span>
-                <table>
-                </table>
-            </div>
-        </div>
-    </main>
-    <div id="modal" style="display: none;position: fixed;top:0;z-index: 10;width: 100%;;height: 100vh;background: rgba(0, 0, 0, 0.5);">
-        <div style="background: var(--bianco);display: flex;flex-flow: column;align-items: center;gap:20px;bottom: 0;position:absolute;width: 100%;padding: 25px 0;border-radius: 15px 15px 0 0;">
-            <button onclick="openModal()" style="width: 30px;height: 30px;border-radius: 50% 0 50% 0;background: red;border: none;position: absolute;top: 0;left: 0;cursor: pointer;">X</button>
-            <div>
-                <span>Voto:</span>
-                <input id="inputVal" type="number">
-            </div>
-            <div>
-                <span>Peso:</span>
-                <input id="inputPeso" type="number">
-            </div>
-            <div style="display: flex;flex-flow: column;">
-                <span>Materia:</span>
-                <ul id="modal-materie-list" style="display: grid;grid-template-columns: repeat(2, 1fr);gap: 8px;"></ul>
-            </div>
-            <button style="padding: 10px 15px;background: var(--primario);color: var(--bianco);border: none;border-radius: 10px;cursor: pointer;" onclick="aggiungiVoto()">Aggiungi Voto</button>
+<body>
+
+<!-- USER SETUP OVERLAY -->
+<div class="setup-overlay show" id="setup-overlay">
+    <div class="setup-card">
+        <div class="setup-icon">📚</div>
+        <h2 class="setup-title">Benvenuto</h2>
+        <p class="setup-sub" id="setup-sub">Inserisci il tuo ID utente per accedere ai tuoi voti, oppure creane uno nuovo.</p>
+        <input class="setup-input" id="setup-input" placeholder="es. A1B2C3D4" maxlength="8">
+        <button class="setup-btn" onclick="loginWithId()">Accedi</button>
+        <button class="setup-btn-sec" onclick="createNewUser()">✦ Crea nuovo account</button>
+    </div>
+</div>
+
+<header>
+    <div class="header-inner">
+        <span class="header-title">Voti</span>
+        <div class="header-user">
+            <span id="user-id-display"></span>
+            <span class="user-badge" onclick="logoutUser()">✕ esci</span>
         </div>
     </div>
-    <footer style="background: var(--primario);text-align: center;color: var(--bianco);padding: 10px;"><a href="https://github.com/azotounderscore/voti-tracciatore" style="color: var(--bianco);text-decoration: none;">Github <i class="fa-brands fa-github"></i></a></footer>
+</header>
+
+<main>
+    <div id="app-content" style="display:none">
+        <!-- MEDIA GENERALE -->
+        <div class="media-card">
+            <div class="media-circle" id="media-circle">—</div>
+            <div class="media-info">
+                <div class="media-label">Media complessiva</div>
+                <div class="media-value" id="media-val">–</div>
+                <div class="media-sub" id="media-sub">Nessun voto inserito</div>
+            </div>
+        </div>
+
+        <!-- MATERIE -->
+        <div class="materie-grid" id="materie-grid"></div>
+
+        <!-- LISTA VOTI -->
+        <div class="section-header">
+            <span class="section-title">Tutti i voti</span>
+            <div class="sort-toggle">
+                <button class="sort-btn active" onclick="setSortMode('data')" id="sort-data">Per data</button>
+                <button class="sort-btn" onclick="setSortMode('materia')" id="sort-mat">Per materia</button>
+            </div>
+        </div>
+        <div class="voti-list" id="voti-list">
+            <div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <p>Nessun voto ancora. Aggiungine uno!</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" onclick="openModal()" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Aggiungi voto
+</button>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOnBg(event)">
+    <div class="modal-sheet" id="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Nuova valutazione</div>
+        <div class="modal-body">
+            <!-- VOTO SLIDER -->
+            <div class="voto-slider-section">
+                <div class="slider-label">Voto</div>
+                <div class="voto-display" id="voto-display">–</div>
+                <div class="slider-track" id="slider-track"></div>
+            </div>
+            <!-- PESO -->
+            <div class="peso-section">
+                <div class="slider-label">Peso</div>
+                <div class="peso-options">
+                    <button class="peso-btn sel" data-peso="25" onclick="selPeso(this)">¼</button>
+                    <button class="peso-btn" data-peso="50" onclick="selPeso(this)">½</button>
+                    <button class="peso-btn sel" data-peso="100" onclick="selPeso(this)">Intero</button>
+                    <button class="peso-btn" data-peso="custom" onclick="selPeso(this)">Custom</button>
+                </div>
+                <div class="peso-custom-wrap" id="peso-custom-wrap">
+                    <input class="peso-custom-input" id="peso-custom-input" type="number" placeholder="es. 75" min="1" max="200">
+                </div>
+            </div>
+            <!-- MATERIA -->
+            <div class="materie-section">
+                <div class="slider-label">Materia</div>
+                <div class="materie-chips" id="materie-chips"></div>
+            </div>
+            <button class="confirm-btn" id="confirm-btn" onclick="aggiungiVoto()" disabled>Aggiungi Valutazione</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer><a href="https://github.com/azotounderscore/voti-tracciatore">↗ GitHub</a></footer>
 
 <script>
-const materie = [
-    {
-        nome: "Inglese",
-        val: [9, 7.75, 8.5],
-        peso: [100, 100, 100]
-    },
-    {
-        nome: "Matematica",
-        val: [7.25, 10, 4.5],
-        peso: [100, 25, 100]
-    },
-    {
-        nome: "Scienze",
-        val: [5.75, 4.5, 5.5],
-        peso: [100, 100, 100]
-    },
-    {
-        nome: "Italiano",
-        val: [5.5, 4, 5.5, 4.75],
-        peso: [100, 50, 100, 100]
-    },
-    {
-        nome: "Filosofia",
-        val: [4, 6, 5.5, 9],
-        peso: [50, 100, 100, 50]
-    },
-    {
-        nome: "Latino",
-        val: [7.5, 4.75, 5.75, 7.5, 5.25],
-        peso: [50, 100, 100, 50, 100]
-    },
-    {
-        nome: "Arte",
-        val: [4, 5.75],
-        peso: [50, 100]
-    },
-    {
-        nome: "Fisica",
-        val: [7.5, 4.5, 8.5],
-        peso: [100, 100, 50]
-    },
-    {
-        nome: "Educazione Civiva",
-        val: [6, 4, 7.5],
-        peso: [100, 100, 100]
-    },
-    {
-        nome: "Storia",
-        val: [6, 4, 7.25, 6.5],
-        peso: [50, 50, 100, 100]
-    },
-    {
-        nome: "Scienze Motorie",
-        val: [7.5, 8.5],
-        peso: [100, 100]
-    },
-    {
-        nome: "Religione",
-        val: [],
-        peso: []
-    }
-]
-const generalPanel = document.getElementById('general-panel')
-const listPanel = document.getElementById('list-panel')
+// ===== SUPABASE CONFIG =====
+// SOSTITUISCI CON LE TUE CREDENZIALI SUPABASE:
+const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_KEY = 'YOUR_ANON_KEY';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-var materiaSelezionata
+// ===== STATO GLOBALE =====
+let userId = null;
+let materie = [];
+let tuttiVoti = [];
+let selectedVoto = null;
+let selectedPeso = 100;
+let selectedMateria = null;
+let sortMode = 'data';
 
-function init() {
-    generalPanel.innerHTML =
-    `<div id="media-generale" style="padding: 25px 0;grid-column: span 2 / span 2;background: var(--verde);border-radius: 20px;display: flex;flex-flow: column;justify-content: center;align-items: center;gap:17px;color: var(--bianco);">
-        <span style="font-size: 14px;">La tua media complessiva:</span>
-        <div id="general-display" style="border: 5px solid white;aspect-ratio: 1/1;display: flex;align-items: center;border-radius: 50%;padding: 15px;font-size: 32px;"></div>
-    </div>`
-    const generalDisplay = document.getElementById('general-display')
-        materie.forEach(materia => {
-            var col
-        var mediaMat = mediaPonderata(materia)
-        if (mediaMat >= 6) {col = "var(--verde)"} else if (mediaMat >= 5) {col = "var(--arancio)"} else {col = "var(--arancio)"}
-        const container = document.createElement('div')
-        container.classList.add('materia-singola')
-        container.innerHTML = `
-        <span>${materia.nome}</span>
-        <div style="background:${col}">${mediaMat}</div>`;
-        generalPanel.appendChild(container)
-    
-        const materiaPulsante = document.createElement('li')
-        materiaPulsante.innerHTML = materia.nome
-        document.getElementById('modal-materie-list').appendChild(materiaPulsante)
+// Voti possibili slider
+const votiPossibili = [];
+for (let v = 1; v <= 10; v += 0.25) {
+    votiPossibili.push(parseFloat(v.toFixed(2)));
+}
+
+// Colori per materia (stabile, basato sull'indice)
+const COLORS = ['#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085','#2c3e50','#e74c3c','#7f8c8d','#f39c12','#1abc9c','#6c5ce7'];
+
+// ===== INIT SLIDER =====
+function initSlider() {
+    const track = document.getElementById('slider-track');
+    track.innerHTML = '';
+    votiPossibili.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = 'slider-voto';
+        btn.textContent = v % 1 === 0 ? v : v;
+        btn.onclick = () => selectVoto(v, btn);
+        btn.dataset.val = v;
+        track.appendChild(btn);
     });
-    generalDisplay.textContent = calcoloMediaTot()
-    console.log(generalDisplay);
-
-    // lista 
-
-    
 }
-function calcoloMediaTot() {
-    console.log("calcoloMediaTot chiamata");
-    var mediaTotale = 0
-    var pesoTotale = 0
-    for (let i = 0;i<materie.length;i++) {
-        for(let j = 0;j<materie[i].val.length;j++){
-            mediaTotale += materie[i].val[j]*materie[i].peso[j]
-            pesoTotale += materie[i].peso[j]
-        }
+
+function selectVoto(v, btn) {
+    selectedVoto = v;
+    document.querySelectorAll('.slider-voto').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    const display = document.getElementById('voto-display');
+    display.textContent = v;
+    display.style.color = v >= 6 ? 'var(--verde)' : v >= 5 ? 'var(--arancio)' : 'var(--rosso)';
+    checkConfirm();
+}
+
+// ===== PESO =====
+function selPeso(btn) {
+    document.querySelectorAll('.peso-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    const wrap = document.getElementById('peso-custom-wrap');
+    if (btn.dataset.peso === 'custom') {
+        wrap.classList.add('show');
+        selectedPeso = null;
+    } else {
+        wrap.classList.remove('show');
+        selectedPeso = parseInt(btn.dataset.peso);
     }
-    mediaTotale /= pesoTotale
-    console.log(mediaTotale);
-    return mediaTotale.toFixed(2)
-}
-init()
-function mediaPonderata(materia) {
-    var media = 0
-    var pesoTot = 0
-    for (let i=0;i<materia.val.length;i++) {
-        media += (materia.val[i]*materia.peso[i])
-        pesoTot += materia.peso[i]
-    }
-    media /= pesoTot
-    return media.toFixed(2)
-}
-const liElements = document.querySelectorAll('li')
-liElements.forEach(el => {
-    el.addEventListener('click', function() {
-        liElements.forEach(liEl => {liEl.classList.remove('materiaSelezionata')})
-        el.classList.toggle("materiaSelezionata")
-        console.log(el.textContent)
-    })
-});
-function selezionaMateria(materia) {
-    materiaSelezionata = materia.nome
-    console.log("seleziona", materiaSelezionata)
+    checkConfirm();
 }
 
-const modal = document.getElementById('modal')
+// ===== MATERIE CHIPS =====
+function renderMaterieChips() {
+    const container = document.getElementById('materie-chips');
+    container.innerHTML = '';
+    selectedMateria = null;
+    materie.forEach((m, i) => {
+        const chip = document.createElement('button');
+        chip.className = 'materia-chip';
+        chip.textContent = m.nome;
+        chip.onclick = () => {
+            document.querySelectorAll('.materia-chip').forEach(c => c.classList.remove('sel'));
+            chip.classList.add('sel');
+            selectedMateria = m;
+            checkConfirm();
+        };
+        container.appendChild(chip);
+    });
+}
+
+function checkConfirm() {
+    const pesoVal = document.getElementById('peso-custom-input').value;
+    const peso = selectedPeso !== null ? selectedPeso : parseFloat(pesoVal);
+    const ok = selectedVoto !== null && !isNaN(peso) && peso > 0 && selectedMateria !== null;
+    document.getElementById('confirm-btn').disabled = !ok;
+}
+
+// ===== MODAL =====
 function openModal() {
-    if (modal.style.display == "none") {modal.style.display = "block"} else {modal.style.display = "none"}
+    initSlider();
+    renderMaterieChips();
+    selectedVoto = null;
+    selectedMateria = null;
+    selectedPeso = 100;
+    document.getElementById('voto-display').textContent = '–';
+    document.getElementById('voto-display').style.color = 'var(--ink)';
+    document.getElementById('peso-custom-wrap').classList.remove('show');
+    document.querySelectorAll('.peso-btn').forEach((b,i) => {
+        b.classList.remove('sel');
+        if (b.dataset.peso === '100') b.classList.add('sel');
+    });
+    document.getElementById('confirm-btn').disabled = true;
+    document.getElementById('modal').classList.add('open');
 }
-function aggiungiVoto(){
-    const nuovoVal = document.getElementById('inputVal').value
-    const nuovoPeso = document.getElementById('inputPeso').value
-    const nuovoMateria = document.querySelector('.materiaSelezionata').innerHTML;
-    console.log("NUOVO VOTO:", nuovoVal, nuovoPeso, nuovoMateria)
-    const materiaTrovata = materie.find(m => m.nome === nuovoMateria)
-    if (materiaTrovata) {
-        materiaTrovata.val.push(parseFloat(nuovoVal))
-        materiaTrovata.peso.push(parseFloat(nuovoPeso))
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+}
+
+function closeModalOnBg(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+}
+
+// ===== AGGIUNGI VOTO =====
+async function aggiungiVoto() {
+    const pesoCustom = document.getElementById('peso-custom-input').value;
+    const peso = selectedPeso !== null ? selectedPeso : parseFloat(pesoCustom);
+    if (!selectedVoto || !selectedMateria || isNaN(peso) || peso <= 0) return;
+
+    const newVoto = {
+        user_id: userId,
+        materia_id: selectedMateria.id,
+        valore: selectedVoto,
+        peso: peso,
+        created_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase.from('voti').insert([newVoto]).select().single();
+    if (error) { showToast('Errore: ' + error.message); return; }
+
+    tuttiVoti.push({ ...data, materia_nome: selectedMateria.nome });
+    closeModal();
+    renderAll();
+    showToast('Voto aggiunto! 🎉');
+}
+
+// ===== RENDER PRINCIPALE =====
+function getColor(index) {
+    return COLORS[index % COLORS.length];
+}
+
+function mediaPonderata(voti) {
+    if (!voti.length) return null;
+    let num = 0, den = 0;
+    voti.forEach(v => { num += v.valore * v.peso; den += v.peso; });
+    return den > 0 ? (num / den) : null;
+}
+
+function colorForMedia(m) {
+    if (m === null) return 'var(--ink-muted)';
+    if (m >= 6) return 'var(--verde)';
+    if (m >= 5) return 'var(--arancio)';
+    return 'var(--rosso)';
+}
+
+function renderAll() {
+    // Media generale
+    const media = mediaPonderata(tuttiVoti);
+    const circleEl = document.getElementById('media-circle');
+    const valEl = document.getElementById('media-val');
+    const subEl = document.getElementById('media-sub');
+    if (media !== null) {
+        circleEl.textContent = media.toFixed(2);
+        circleEl.style.background = colorForMedia(media);
+        valEl.textContent = media.toFixed(2);
+        subEl.textContent = `${tuttiVoti.length} vot${tuttiVoti.length === 1 ? 'o' : 'i'} in ${materie.filter(m => tuttiVoti.find(v => v.materia_id === m.id)).length} materie`;
+    } else {
+        circleEl.textContent = '—';
+        circleEl.style.background = 'var(--ink-muted)';
+        valEl.textContent = '–';
+        subEl.textContent = 'Nessun voto inserito';
     }
-    openModal()
-    init()
+
+    // Griglia materie
+    const grid = document.getElementById('materie-grid');
+    grid.innerHTML = '';
+    materie.forEach((m, i) => {
+        const votiMat = tuttiVoti.filter(v => v.materia_id === m.id);
+        const med = mediaPonderata(votiMat);
+        const col = med !== null ? colorForMedia(med) : 'var(--ink-muted)';
+        const card = document.createElement('div');
+        card.className = 'materia-card';
+        card.innerHTML = `
+            <div class="materia-dot" style="background:${col}">${med !== null ? med.toFixed(1) : '–'}</div>
+            <div>
+                <div class="materia-nome">${m.nome}</div>
+                <div class="materia-count">${votiMat.length} vot${votiMat.length === 1 ? 'o' : 'i'}</div>
+            </div>`;
+        grid.appendChild(card);
+    });
+
+    // Lista voti
+    renderLista();
 }
+
+function setSortMode(mode) {
+    sortMode = mode;
+    document.getElementById('sort-data').classList.toggle('active', mode === 'data');
+    document.getElementById('sort-mat').classList.toggle('active', mode === 'materia');
+    renderLista();
+}
+
+function renderLista() {
+    const container = document.getElementById('voti-list');
+    container.innerHTML = '';
+    if (!tuttiVoti.length) {
+        container.innerHTML = `<div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p>Nessun voto ancora. Aggiungine uno!</p></div>`;
+        return;
+    }
+
+    if (sortMode === 'data') {
+        const sorted = [...tuttiVoti].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        sorted.forEach(v => container.appendChild(makeVotoItem(v)));
+    } else {
+        // Raggruppa per materia
+        materie.forEach((m, mi) => {
+            const votiMat = tuttiVoti.filter(v => v.materia_id === m.id);
+            if (!votiMat.length) return;
+            const label = document.createElement('div');
+            label.className = 'group-label';
+            label.textContent = m.nome;
+            container.appendChild(label);
+            votiMat.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .forEach(v => container.appendChild(makeVotoItem(v)));
+        });
+    }
+}
+
+function makeVotoItem(v) {
+    const mIdx = materie.findIndex(m => m.id === v.materia_id);
+    const col = colorForMedia(v.valore);
+    const date = new Date(v.created_at);
+    const dateStr = date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+    const item = document.createElement('div');
+    item.className = 'voto-item';
+    item.innerHTML = `
+        <div class="voto-badge" style="background:${col}">${v.valore}</div>
+        <div class="voto-info">
+            <div class="voto-materia">${v.materia_nome || materie[mIdx]?.nome || '?'}</div>
+            <div class="voto-meta">${dateStr}</div>
+        </div>
+        <span class="voto-peso">peso ${v.peso}</span>`;
+    return item;
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== AUTH / USER =====
+function generateId() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({length: 8}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+async function loginWithId() {
+    const input = document.getElementById('setup-input').value.trim().toUpperCase();
+    if (!input || input.length < 4) { showToast('ID troppo corto'); return; }
+
+    // Cerca utente
+    const { data, error } = await supabase.from('users').select('id').eq('user_code', input).single();
+    if (error || !data) {
+        document.getElementById('setup-sub').textContent = 'ID non trovato. Controllalo o crea un nuovo account.';
+        return;
+    }
+    localStorage.setItem('voti_user_code', input);
+    localStorage.setItem('voti_user_id', data.id);
+    enterApp(input, data.id);
+}
+
+async function createNewUser() {
+    const code = generateId();
+    const { data, error } = await supabase.from('users').insert([{ user_code: code }]).select().single();
+    if (error) { showToast('Errore creazione account'); return; }
+    localStorage.setItem('voti_user_code', code);
+    localStorage.setItem('voti_user_id', data.id);
+    showToast('Account creato! Il tuo ID: ' + code);
+    enterApp(code, data.id);
+}
+
+function logoutUser() {
+    localStorage.removeItem('voti_user_code');
+    localStorage.removeItem('voti_user_id');
+    document.getElementById('setup-input').value = '';
+    document.getElementById('setup-sub').textContent = 'Inserisci il tuo ID utente per accedere ai tuoi voti, oppure creane uno nuovo.';
+    document.getElementById('app-content').style.display = 'none';
+    document.getElementById('fab-btn').style.display = 'none';
+    document.getElementById('setup-overlay').classList.add('show');
+}
+
+async function enterApp(code, uid) {
+    userId = uid;
+    document.getElementById('user-id-display').textContent = code;
+    document.getElementById('setup-overlay').classList.remove('show');
+    document.getElementById('app-content').style.display = 'block';
+    document.getElementById('fab-btn').style.display = 'flex';
+    await loadData();
+}
+
+// ===== LOAD DATA =====
+async function loadData() {
+    // Carica materie
+    const { data: matData } = await supabase.from('materie').select('*').order('nome');
+    materie = matData || [];
+
+    // Carica voti con join
+    const { data: votiData } = await supabase
+        .from('voti')
+        .select('*, materie(nome)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    tuttiVoti = (votiData || []).map(v => ({
+        ...v,
+        materia_nome: v.materie?.nome || '?'
+    }));
+
+    renderAll();
+}
+
+// ===== BOOTSTRAP =====
+(async () => {
+    const savedCode = localStorage.getItem('voti_user_code');
+    const savedId = localStorage.getItem('voti_user_id');
+    if (savedCode && savedId) {
+        document.getElementById('setup-input').value = savedCode;
+        await enterApp(savedCode, savedId);
+    }
+})();
 </script>
 </body>
 </html>
