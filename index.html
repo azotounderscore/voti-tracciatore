@@ -675,7 +675,7 @@
 // SOSTITUISCI CON LE TUE CREDENZIALI SUPABASE:
 const SUPABASE_URL = 'https://ayfinxkhwpqxuuycrcun.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5ZmlueGtod3BxeHV1eWNyY3VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODQzNjgsImV4cCI6MjA5NTU2MDM2OH0.M6AOM_snH256D7YasCrbKKhcoOkOlce7mQhnLe8xCpY';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===== STATO GLOBALE =====
 let userId = null;
@@ -801,7 +801,7 @@ async function aggiungiVoto() {
         created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase.from('voti').insert([newVoto]).select().single();
+    const { data, error } = await db.from('voti').insert([newVoto]).select().single();
     if (error) { showToast('Errore: ' + error.message); return; }
 
     tuttiVoti.push({ ...data, materia_nome: selectedMateria.nome });
@@ -940,7 +940,7 @@ async function loginWithId() {
     if (!input || input.length < 4) { showToast('ID troppo corto'); return; }
 
     // Cerca utente
-    const { data, error } = await supabase.from('users').select('id').eq('user_code', input).single();
+    const { data, error } = await db.from('users').select('id').eq('user_code', input).single();
     if (error || !data) {
         document.getElementById('setup-sub').textContent = 'ID non trovato. Controllalo o crea un nuovo account.';
         return;
@@ -952,7 +952,7 @@ async function loginWithId() {
 
 async function createNewUser() {
     const code = generateId();
-    const { data, error } = await supabase.from('users').insert([{ user_code: code }]).select().single();
+    const { data, error } = await db.from('users').insert([{ user_code: code }]).select().single();
     if (error) { showToast('Errore creazione account'); return; }
     localStorage.setItem('voti_user_code', code);
     localStorage.setItem('voti_user_id', data.id);
@@ -982,11 +982,11 @@ async function enterApp(code, uid) {
 // ===== LOAD DATA =====
 async function loadData() {
     // Carica materie
-    const { data: matData } = await supabase.from('materie').select('*').order('nome');
+    const { data: matData } = await db.from('materie').select('*').order('nome');
     materie = matData || [];
 
     // Carica voti con join
-    const { data: votiData } = await supabase
+    const { data: votiData } = await db
         .from('voti')
         .select('*, materie(nome)')
         .eq('user_id', userId)
